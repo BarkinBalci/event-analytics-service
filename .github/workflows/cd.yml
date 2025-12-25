@@ -1,0 +1,63 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        service:
+          - name: api
+            dockerfile: deployments/docker/api.Dockerfile
+            image: event-analytics-api
+            ecs-service: api
+
+          - name: consumer
+            dockerfile: deployments/docker/consumer.Dockerfile
+            image: event-analytics-consumer
+            ecs-service: consumer
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Configure ECR credentials
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.image }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update ECS service ${{ matrix.service.name }}
+        run: |
+          aws ecs update-service \
+            --cluster event-analytics \
+            --service ${{ matrix.service.ecs-service }} \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION }}
