@@ -1,0 +1,375 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for publishing and managing analytics events",
+        "title": "Event Analytics Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/events": {
+            "post": {
+                "description": "Publish a single analytics event to the queue",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Publish a single event",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublishEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublishEventResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/bulk": {
+            "post": {
+                "description": "Publish multiple analytics events in bulk to the queue",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Publish multiple events",
+                "parameters": [
+                    {
+                        "description": "Bulk events data",
+                        "name": "events",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublishEventsBulkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublishBulkEventsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Check if the service is running",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "description": "Retrieve aggregated event metrics with optional grouping by channel, hour, or day",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metrics"
+                ],
+                "summary": "Get aggregated metrics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event name to filter by",
+                        "name": "event_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Start timestamp (Unix epoch)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "End timestamp (Unix epoch)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "channel",
+                            "hour",
+                            "day"
+                        ],
+                        "type": "string",
+                        "description": "Field to group by (channel, hour, day)",
+                        "name": "group_by",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetMetricsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "validation_error"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "event_name is required"
+                }
+            }
+        },
+        "dto.GetMetricsResponse": {
+            "type": "object",
+            "properties": {
+                "event_name": {
+                    "type": "string",
+                    "example": "product_view"
+                },
+                "from": {
+                    "type": "integer",
+                    "example": 1723475612
+                },
+                "group_by": {
+                    "type": "string",
+                    "example": "channel"
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.MetricsGroupData"
+                    }
+                },
+                "to": {
+                    "type": "integer",
+                    "example": 1723562012
+                },
+                "total_count": {
+                    "type": "integer",
+                    "example": 5000
+                },
+                "unique_count": {
+                    "type": "integer",
+                    "example": 2500
+                }
+            }
+        },
+        "dto.MetricsGroupData": {
+            "type": "object",
+            "properties": {
+                "group_value": {
+                    "type": "string",
+                    "example": "web"
+                },
+                "total_count": {
+                    "type": "integer",
+                    "example": 1500
+                }
+            }
+        },
+        "dto.PublishBulkEventsResponse": {
+            "type": "object",
+            "properties": {
+                "accepted": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "validation error on event 3"
+                    ]
+                },
+                "event_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "evt_1",
+                        "evt_2",
+                        "evt_3"
+                    ]
+                },
+                "rejected": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "dto.PublishEventRequest": {
+            "type": "object",
+            "required": [
+                "channel",
+                "event_name",
+                "timestamp",
+                "user_id"
+            ],
+            "properties": {
+                "campaign_id": {
+                    "type": "string",
+                    "example": "cmp_987"
+                },
+                "channel": {
+                    "type": "string",
+                    "example": "web"
+                },
+                "event_name": {
+                    "type": "string",
+                    "example": "product_view"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "price": "129.99",
+                        "product_id": "prod-789"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "electronics",
+                        "homepage",
+                        "flash_sale"
+                    ]
+                },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1723475612
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "user_123"
+                }
+            }
+        },
+        "dto.PublishEventResponse": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "string",
+                    "example": "evt_1a2b3c4d5e6f"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "accepted"
+                }
+            }
+        },
+        "dto.PublishEventsBulkRequest": {
+            "type": "object",
+            "required": [
+                "events"
+            ],
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "maxItems": 1000,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/dto.PublishEventRequest"
+                    }
+                }
+            }
+        }
+    }
+}

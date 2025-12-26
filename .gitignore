@@ -1,0 +1,8 @@
+# JetBrains IDEs
+/.idea
+
+# Environment Variables
+*.env
+
+# Binaries
+/bin

@@ -1,0 +1,31 @@
+aws_region = "eu-central-1"
+
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["eu-central-1a", "eu-central-1b"]
+private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnet_cidrs  = ["10.0.101.0/24", "10.0.102.0/24"]
+single_nat_gateway   = true
+
+CLICKHOUSE_HOST     = "your-instance.clickhouse.cloud"
+CLICKHOUSE_PORT     = 9440
+CLICKHOUSE_DATABASE = "events"
+CLICKHOUSE_USER     = "default"
+CLICKHOUSE_PASSWORD = "CHANGE_ME"
+
+service_host = "eas.barkin.dev"
+image_tag    = "latest"
+
+api_cpu           = "512"
+api_memory        = "1024"
+api_desired_count = 2
+api_min_capacity  = 1
+api_max_capacity  = 10
+
+consumer_cpu                = "1024"
+consumer_memory             = "2048"
+consumer_desired_count      = 1
+consumer_min_capacity       = 1
+consumer_max_capacity       = 5
+consumer_target_queue_depth = 1000
+
+log_retention_days = 30

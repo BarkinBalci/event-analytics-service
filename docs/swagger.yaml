@@ -1,0 +1,258 @@
+basePath: /
+definitions:
+  dto.ErrorResponse:
+    properties:
+      error:
+        example: validation_error
+        type: string
+      message:
+        example: event_name is required
+        type: string
+    type: object
+  dto.GetMetricsResponse:
+    properties:
+      event_name:
+        example: product_view
+        type: string
+      from:
+        example: 1723475612
+        type: integer
+      group_by:
+        example: channel
+        type: string
+      groups:
+        items:
+          $ref: '#/definitions/dto.MetricsGroupData'
+        type: array
+      to:
+        example: 1723562012
+        type: integer
+      total_count:
+        example: 5000
+        type: integer
+      unique_count:
+        example: 2500
+        type: integer
+    type: object
+  dto.MetricsGroupData:
+    properties:
+      group_value:
+        example: web
+        type: string
+      total_count:
+        example: 1500
+        type: integer
+    type: object
+  dto.PublishBulkEventsResponse:
+    properties:
+      accepted:
+        example: 5
+        type: integer
+      errors:
+        example:
+        - validation error on event 3
+        items:
+          type: string
+        type: array
+      event_ids:
+        example:
+        - evt_1
+        - evt_2
+        - evt_3
+        items:
+          type: string
+        type: array
+      rejected:
+        example: 0
+        type: integer
+    type: object
+  dto.PublishEventRequest:
+    properties:
+      campaign_id:
+        example: cmp_987
+        type: string
+      channel:
+        example: web
+        type: string
+      event_name:
+        example: product_view
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        example:
+          price: "129.99"
+          product_id: prod-789
+        type: object
+      tags:
+        example:
+        - electronics
+        - homepage
+        - flash_sale
+        items:
+          type: string
+        type: array
+      timestamp:
+        example: 1723475612
+        type: integer
+      user_id:
+        example: user_123
+        type: string
+    required:
+    - channel
+    - event_name
+    - timestamp
+    - user_id
+    type: object
+  dto.PublishEventResponse:
+    properties:
+      event_id:
+        example: evt_1a2b3c4d5e6f
+        type: string
+      status:
+        example: accepted
+        type: string
+    type: object
+  dto.PublishEventsBulkRequest:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/dto.PublishEventRequest'
+        maxItems: 1000
+        minItems: 1
+        type: array
+    required:
+    - events
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for publishing and managing analytics events
+  title: Event Analytics Service API
+  version: "1.0"
+paths:
+  /events:
+    post:
+      consumes:
+      - application/json
+      description: Publish a single analytics event to the queue
+      parameters:
+      - description: Event data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PublishEventRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/dto.PublishEventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Publish a single event
+      tags:
+      - events
+  /events/bulk:
+    post:
+      consumes:
+      - application/json
+      description: Publish multiple analytics events in bulk to the queue
+      parameters:
+      - description: Bulk events data
+        in: body
+        name: events
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PublishEventsBulkRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/dto.PublishBulkEventsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Publish multiple events
+      tags:
+      - events
+  /health:
+    get:
+      description: Check if the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+  /metrics:
+    get:
+      description: Retrieve aggregated event metrics with optional grouping by channel,
+        hour, or day
+      parameters:
+      - description: Event name to filter by
+        in: query
+        name: event_name
+        required: true
+        type: string
+      - description: Start timestamp (Unix epoch)
+        in: query
+        name: from
+        required: true
+        type: integer
+      - description: End timestamp (Unix epoch)
+        in: query
+        name: to
+        required: true
+        type: integer
+      - description: Field to group by (channel, hour, day)
+        enum:
+        - channel
+        - hour
+        - day
+        in: query
+        name: group_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetMetricsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get aggregated metrics
+      tags:
+      - metrics
+schemes:
+- http
+- https
+swagger: "2.0"
