@@ -24,6 +24,7 @@ type ClickHouse struct {
 	Database        string `envconfig:"CLICKHOUSE_DATABASE" required:"true"`
 	User            string `envconfig:"CLICKHOUSE_USER" default:""`
 	Password        string `envconfig:"CLICKHOUSE_PASSWORD" default:""`
+	UseTLS          bool   `envconfig:"CLICKHOUSE_USE_TLS" default:"true"`
 	MaxOpenConns    int    `envconfig:"CLICKHOUSE_MAX_OPEN_CONNS" default:"5"`
 	MaxIdleConns    int    `envconfig:"CLICKHOUSE_MAX_IDLE_CONNS" default:"2"`
 	ConnMaxLifetime int    `envconfig:"CLICKHOUSE_CONN_MAX_LIFETIME" default:"10"`

@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -26,7 +27,16 @@ func NewClient(ctx context.Context, config *config.ClickHouse, log *zap.Logger) 
 	log.Info("Connecting to ClickHouse",
 		zap.String("host", config.Host),
 		zap.String("port", config.Port),
-		zap.String("database", config.Database))
+		zap.String("database", config.Database),
+		zap.Bool("useTLS", config.UseTLS))
+
+	// Configure TLS based on environment
+	var tlsConfig *tls.Config
+	if config.UseTLS {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: false,
+		}
+	}
 
 	connection, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{addr},
@@ -38,6 +48,7 @@ func NewClient(ctx context.Context, config *config.ClickHouse, log *zap.Logger) 
 		Settings: clickhouse.Settings{
 			"max_execution_time": 60,
 		},
+		TLS:              tlsConfig,
 		DialTimeout:      5 * time.Second,
 		MaxOpenConns:     config.MaxOpenConns,
 		MaxIdleConns:     config.MaxIdleConns,
